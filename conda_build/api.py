@@ -61,9 +61,10 @@ def check(recipe_path, no_download_source=False, config=None, **kwargs):
 
 
 def build(recipe_paths_or_metadata, post=None, need_source_download=True,
-          build_only=False, notest=False, config=None, **kwargs):
+          build_only=False, notest=False, whl_build=False, config=None, **kwargs):
     import os
     from conda_build.build import build_tree
+    print("!!! whl_build", whl_build)
 
     config = get_or_merge_config(config, **kwargs)
 
@@ -78,7 +79,8 @@ def build(recipe_paths_or_metadata, post=None, need_source_download=True,
             absolute_recipes.append(os.path.join(os.getcwd(), recipe))
 
     return build_tree(absolute_recipes, build_only=build_only, post=post, notest=notest,
-                      need_source_download=need_source_download, config=config)
+                      need_source_download=need_source_download,
+                      whl_build=whl_build, config=config)
 
 
 def test(recipedir_or_package_or_metadata, move_broken=True, config=None, **kwargs):

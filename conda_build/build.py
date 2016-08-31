@@ -512,7 +512,9 @@ def rm_pkgs_cache(dist):
     plan.execute_plan(rmplan)
 
 
-def build(m, config, post=None, need_source_download=True, need_reparse_in_env=False):
+def build(
+        m, config, post=None, need_source_download=True,
+        need_reparse_in_env=False, whl_build=False):
     '''
     Build the package with the specified metadata.
 
@@ -524,6 +526,7 @@ def build(m, config, post=None, need_source_download=True, need_reparse_in_env=F
     :type need_source_download: bool: if rendering failed to download source
     (due to missing tools), retry here after build env is populated
     '''
+    print("!!! build:whl_build", whl_build)
 
     if m.skip():
         print("Skipped: The %s recipe defines build/skip for this "
@@ -735,6 +738,22 @@ can lead to packages that include their dependencies.""" % meta_files))
             copy_into(tmp_path, path, config.timeout)
         update_index(config.bldpkgs_dir, config)
 
+    elif whl_build:
+        print("Copying whl file")
+        #import IPython; IPython.embed()
+        src_dir = source.get_dir(config)
+        whl_files = glob(os.path.join(src_dir, 'dist', '*.whl'))
+        assert len(whl_files) == 1
+        whl_path = whl_files[0]
+        _, whl_filename = os.path.split(whl_path)
+
+        tarbz2_path = bldpkg_path(m, config)
+        dir_, tarbz2 = os.path.split(tarbz2_path)
+        path = os.path.join(dir_, whl_filename)
+
+        copy_into(whl_path, path, config.timeout)
+        config.whl_path = path
+
     else:
         print("STOPPING BUILD BEFORE POST:", m.dist())
 
@@ -742,13 +761,14 @@ can lead to packages that include their dependencies.""" % meta_files))
     return True
 
 
-def test(m, config, move_broken=True):
+def test(m, config, move_broken=True, whl_build=False):
     '''
     Execute any test scripts for the given package.
 
     :param m: Package's metadata.
     :type m: Metadata
     '''
+    print("!!! test:whl_build", whl_build)
 
     if not os.path.isdir(config.build_folder):
         os.makedirs(config.build_folder)
@@ -778,6 +798,8 @@ def test(m, config, move_broken=True):
 
         get_build_metadata(m, config=config)
         specs = ['%s %s %s' % (m.name(), m.version(), m.build_id())]
+        if whl_build:
+            specs = []
 
         # add packages listed in the run environment and test/requires
         specs.extend(ms.spec for ms in m.ms_depends('run'))
@@ -826,6 +848,12 @@ def test(m, config, move_broken=True):
                     ext=ext,
                     test_env=config.test_prefix,
                     squelch=">nul 2>&1" if on_win else "&> /dev/null"))
+                if on_win:
+                    tf.write("if errorlevel 1 exit 1\n")
+            if whl_build:
+                tf.write("{python} -m wheel install {whl_path}\n".format(
+                    python=config.test_python,
+                    whl_path=config.whl_path))
                 if on_win:
                     tf.write("if errorlevel 1 exit 1\n")
             if py_files:
@@ -898,8 +926,9 @@ Error:
 
 
 def build_tree(recipe_list, config, build_only=False, post=False, notest=False,
-               need_source_download=True):
+               need_source_download=True, whl_build=False):
 
+    print("!!! build_tree:whl build", whl_build)
     to_build_recursive = []
     recipe_list = deque(recipe_list)
 
@@ -910,6 +939,8 @@ def build_tree(recipe_list, config, build_only=False, post=False, notest=False,
             post = False
             notest = True
             config.anaconda_upload = False
+        elif whl_build:
+            post = False
         elif post:
             post = True
             notest = True
@@ -939,9 +970,10 @@ def build_tree(recipe_list, config, build_only=False, post=False, notest=False,
                 ok_to_test = build(metadata, post=post,
                                    need_source_download=need_source_download,
                                    need_reparse_in_env=need_reparse_in_env,
+                                   whl_build=whl_build,
                                    config=config)
                 if not notest and ok_to_test:
-                    test(metadata, config=config)
+                    test(metadata, config=config, whl_build=whl_build)
         except (NoPackagesFound, Unsatisfiable) as e:
             error_str = str(e)
             # Typically if a conflict is with one of these
@@ -980,6 +1012,8 @@ def build_tree(recipe_list, config, build_only=False, post=False, notest=False,
 
         # outputs message, or does upload, depending on value of args.anaconda_upload
         output_file = bldpkg_path(metadata, config=config)
+        if whl_build:
+            output_file = config.whl_path
         handle_anaconda_upload(output_file, config=config)
 
         already_built.add(output_file)
