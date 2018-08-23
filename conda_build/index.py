@@ -575,6 +575,9 @@ def _patch_repodata(index, subdir):
                     deps.append(dep)
                 record['depends'] = deps
 
+            if fn == 'cupti-9.0.176-0.tar.bz2':
+              # depends in package is set as cudatoolkit 9.*, should be 9.0.*
+              record['depends'] = ['cudatoolkit 9.0.*']
         if record['name'] == 'conda-env':
             if not any(d.startswith('python') for d in record['depends']):
                 record['namespace'] = 'python'
