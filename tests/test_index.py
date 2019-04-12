@@ -47,6 +47,7 @@ def test_index_on_single_subdir_1(testing_workdir):
     # #######################################
     assert isfile(join(testing_workdir, 'osx-64', 'index.html'))
     assert isfile(join(testing_workdir, 'osx-64', 'repodata.json.bz2'))
+    assert isfile(join(testing_workdir, 'osx-64', 'repodata_from_packages.json.bz2'))
 
     with open(join(testing_workdir, 'osx-64', 'repodata.json')) as fh:
         actual_repodata_json = json.loads(fh.read())
@@ -141,12 +142,15 @@ def test_index_noarch_osx64_1(testing_workdir):
     assert isfile(join(testing_workdir, 'osx-64', 'index.html'))
     assert isfile(join(testing_workdir, 'osx-64', 'repodata.json'))  # repodata is tested in test_index_on_single_subdir_1
     assert isfile(join(testing_workdir, 'osx-64', 'repodata.json.bz2'))
+    assert isfile(join(testing_workdir, 'osx-64', 'repodata_from_packages.json'))
+    assert isfile(join(testing_workdir, 'osx-64', 'repodata_from_packages.json.bz2'))
 
     # #######################################
     # tests for noarch subdir
     # #######################################
-    assert isfile(join(testing_workdir, 'osx-64', 'index.html'))
-    assert isfile(join(testing_workdir, 'osx-64', 'repodata.json.bz2'))
+    assert isfile(join(testing_workdir, 'noarch', 'index.html'))
+    assert isfile(join(testing_workdir, 'noarch', 'repodata.json.bz2'))
+    assert isfile(join(testing_workdir, 'noarch', 'repodata_from_packages.json.bz2'))
 
     with open(join(testing_workdir, 'noarch', 'repodata.json')) as fh:
         actual_repodata_json = json.loads(fh.read())
