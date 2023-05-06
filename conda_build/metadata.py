@@ -94,12 +94,13 @@ def get_selectors(config: Config) -> dict[str, bool]:
     # Remember to update the docs of any of this changes
     plat = config.host_subdir
     d = dict(
+        freebsd=plat.startswith("freebsd-"),
         linux=plat.startswith("linux-"),
         linux32=bool(plat == "linux-32"),
         linux64=bool(plat == "linux-64"),
         arm=plat.startswith("linux-arm"),
         osx=plat.startswith("osx-"),
-        unix=plat.startswith(("linux-", "osx-")),
+        unix=plat.startswith(("linux-", "osx-", "freebsd-")),
         win=plat.startswith("win-"),
         win32=bool(plat == "win-32"),
         win64=bool(plat == "win-64"),
