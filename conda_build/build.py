@@ -3200,7 +3200,7 @@ def write_build_scripts(m, script, build_file):
     with open(work_file, "w") as bf:
         # bf.write('set -ex\n')
         bf.write("if [ -z ${CONDA_BUILD+x} ]; then\n")
-        bf.write(f"    source {env_file}\n")
+        bf.write(f"    . {env_file}\n")
         bf.write("fi\n")
         if script:
             bf.write(script)
@@ -3226,7 +3226,7 @@ def _write_test_run_script(
     with open(test_run_script, "w") as tf:
         tf.write(
             '{source} "{test_env_script}"\n'.format(
-                source="call" if utils.on_win else "source",
+                source="call" if utils.on_win else ".",
                 test_env_script=test_env_script,
             )
         )
